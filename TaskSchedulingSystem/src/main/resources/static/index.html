@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ProManage — AI Task Scheduler</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ── RESET & VARIABLES ─────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0b0e14; --bg2:#111520; --bg3:#181d2a; --border:#1e2535; --border2:#2a3347;
+  --text:#e2e8f0; --muted:#64748b; --accent:#00d4aa; --gold:#f5c518;
+  --red:#ef4444; --green:#22c55e; --amber:#f59e0b;
+  --font-head:'Syne',sans-serif; --font-body:'Outfit',sans-serif; --font-mono:'DM Mono',monospace;
+}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;display:flex;min-height:100vh;overflow-x:hidden;}
+
+/* ── SIDEBAR ────────────────────────────────────────────────────────────── */
+.sidebar{width:240px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 0;position:fixed;top:0;left:0;z-index:100;}
+.logo{padding:0 24px 28px;border-bottom:1px solid var(--border);}
+.logo-mark{font-family:var(--font-head);font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-0.5px;}
+.logo-sub{font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-top:4px;}
+.nav{padding:20px 12px;flex:1;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:500;font-size:14px;transition:all .18s;margin-bottom:4px;user-select:none;border:1px solid transparent;}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:rgba(0,212,170,.1);color:var(--accent);border-color:rgba(0,212,170,.2);}
+.nav-icon{font-size:17px;width:20px;text-align:center;}
+.sidebar-footer{padding:20px 24px 0;border-top:1px solid var(--border);font-size:11px;color:var(--muted);font-family:var(--font-mono);line-height:1.8;}
+
+/* ── MAIN ───────────────────────────────────────────────────────────────── */
+.main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:18px 36px;display:flex;align-items:center;justify-content:space-between;}
+.page-title{font-family:var(--font-head);font-size:22px;font-weight:700;}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:8px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.api-status{font-size:12px;color:var(--muted);font-family:var(--font-mono);}
+.content{padding:36px;flex:1;}
+
+/* ── PAGES ──────────────────────────────────────────────────────────────── */
+.page{display:none;animation:fadeIn .3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ──────────────────────────────────────────────────────────────── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:24px;}
+.card-title{font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:20px;}
+.card-title span{color:var(--accent);}
+
+/* ── FORM ───────────────────────────────────────────────────────────────── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.form-group{display:flex;flex-direction:column;gap:7px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;font-family:var(--font-mono);}
+input,select{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;transition:border-color .18s;outline:none;}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,170,.08);}
+input::placeholder{color:var(--muted);}
+select option{background:var(--bg3);}
+
+/* ── BUTTONS ────────────────────────────────────────────────────────────── */
+.btn{padding:11px 24px;border-radius:8px;font-family:var(--font-body);font-weight:600;font-size:14px;cursor:pointer;border:none;transition:all .18s;display:inline-flex;align-items:center;gap:8px;}
+.btn-primary{background:var(--accent);color:#0b0e14;}
+.btn-primary:hover{background:#00b894;transform:translateY(-1px);}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border2);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(239,68,68,.3);font-size:12px;padding:6px 12px;}
+.btn-danger:hover{background:rgba(239,68,68,.1);}
+.btn-gold{background:var(--gold);color:#0b0e14;}
+.btn-gold:hover{background:#e5b800;transform:translateY(-1px);}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
+
+/* ── PREDICTION BOX ─────────────────────────────────────────────────────── */
+.prediction-box{background:var(--bg3);border:1px solid var(--border2);border-left:3px solid var(--accent);border-radius:10px;padding:20px 24px;margin-top:24px;display:none;}
+.prediction-box.show{display:block;animation:fadeIn .3s ease;}
+.prediction-box h4{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--accent);margin-bottom:16px;}
+.pred-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+.pred-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-family:var(--font-mono);margin-bottom:4px;}
+.pred-value{font-size:15px;font-weight:600;font-family:var(--font-mono);}
+.pred-value.accent{color:var(--accent)}
+.pred-value.green{color:var(--green)}
+.pred-value.red{color:var(--red)}
+.pred-value.gold{color:var(--gold)}
+.revenue-compare{display:flex;align-items:center;gap:16px;padding-top:16px;border-top:1px solid var(--border);}
+.rev-block{flex:1;}
+.rev-label{font-size:10px;color:var(--muted);text-transform:uppercase;font-family:var(--font-mono);}
+.rev-value{font-size:22px;font-weight:700;font-family:var(--font-head);margin-top:2px;}
+.form-actions{display:flex;gap:12px;margin-top:24px;}
+
+/* ── TABLE ──────────────────────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--bg3);padding:12px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;font-family:var(--font-mono);border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:rgba(255,255,255,.02);}
+tbody td{padding:13px 16px;font-size:14px;}
+
+/* ── BADGES ─────────────────────────────────────────────────────────────── */
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--font-mono);}
+.rank-1{background:rgba(245,197,24,.15);color:var(--gold);border:1px solid rgba(245,197,24,.3);}
+.rank-2{background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.2);}
+.rank-3{background:rgba(180,120,60,.1);color:#b4783c;border:1px solid rgba(180,120,60,.2);}
+.rank-n{background:rgba(30,37,53,.8);color:var(--muted);border:1px solid var(--border);}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--font-mono);}
+.badge-high{background:rgba(239,68,68,.12);color:#ef4444;}
+.badge-medium,.badge-mid{background:rgba(245,158,11,.12);color:#f59e0b;}
+.badge-low,.badge-junior{background:rgba(34,197,94,.12);color:#22c55e;}
+.badge-senior{background:rgba(0,212,170,.12);color:var(--accent);}
+.badge-yes{background:rgba(34,197,94,.12);color:#22c55e;}
+.badge-no{background:rgba(239,68,68,.12);color:#ef4444;}
+
+.mono{font-family:var(--font-mono);}
+.text-gold{color:var(--gold);font-weight:600;}
+.text-green{color:var(--green);font-weight:600;}
+.text-red{color:var(--red);font-weight:600;}
+.text-muted{color:var(--muted);}
+
+/* ── STATS ROW ──────────────────────────────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.stat-value{font-family:var(--font-head);font-size:26px;font-weight:800;margin-bottom:4px;}
+.stat-label{font-size:11px;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.5px;}
+
+/* ── SCHEDULE WEEK GRID ─────────────────────────────────────────────────── */
+.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;}
+.day-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px;min-height:200px;position:relative;transition:border-color .2s;}
+.day-card.filled{border-color:var(--border2);}
+.day-card.filled:hover{border-color:var(--accent);}
+.day-label{font-size:10px;font-family:var(--font-mono);color:var(--border2);margin-bottom:6px;}
+.day-name{font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.day-proj-id{font-family:var(--font-mono);font-size:11px;color:var(--accent);margin-bottom:6px;}
+.day-proj-title{font-weight:600;font-size:14px;margin-bottom:6px;line-height:1.3;}
+.day-proj-type{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.day-revenue{font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--gold);}
+.day-rev-label{font-size:10px;color:var(--muted);text-transform:uppercase;font-family:var(--font-mono);margin-top:2px;}
+.day-ontime{position:absolute;top:16px;right:16px;}
+.day-empty{color:var(--muted);font-size:13px;margin-top:16px;font-style:italic;}
+.total-card{background:linear-gradient(135deg,rgba(0,212,170,.08),rgba(0,153,204,.08));border:1px solid rgba(0,212,170,.2);border-radius:12px;padding:24px 32px;display:flex;align-items:center;justify-content:space-between;}
+.total-label{font-size:13px;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.5px;}
+.total-value{font-family:var(--font-head);font-size:36px;font-weight:800;color:var(--accent);margin-top:4px;}
+.unscheduled-title{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--muted);margin:24px 0 12px;display:flex;align-items:center;gap:8px;}
+
+/* ── SEARCH ─────────────────────────────────────────────────────────────── */
+.search-bar-wrap{display:flex;gap:12px;margin-bottom:24px;}
+.search-result{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:28px;display:none;}
+.search-result.show{display:block;animation:fadeIn .3s ease;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.detail-row:last-child{border-bottom:none;}
+.detail-key{color:var(--muted);font-family:var(--font-mono);font-size:12px;}
+.section-divider{padding:14px 0 8px;font-size:11px;color:var(--accent);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+
+/* ── EMPTY & TOAST ──────────────────────────────────────────────────────── */
+.empty-state{text-align:center;padding:60px 24px;color:var(--muted);}
+.empty-state .icon{font-size:48px;margin-bottom:16px;}
+.empty-state h3{font-family:var(--font-head);font-size:18px;color:var(--text);margin-bottom:8px;}
+#toast{position:fixed;bottom:28px;right:28px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:14px 20px;font-size:14px;font-weight:500;z-index:999;transform:translateY(80px);opacity:0;transition:all .25s ease;max-width:360px;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.success{border-left:3px solid var(--green);}
+#toast.error{border-left:3px solid var(--red);}
+#toast.info{border-left:3px solid var(--accent);}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,212,170,.3);border-top-color:var(--accent);border-radius:50%;animation:rotate .7s linear infinite;}
+@keyframes rotate{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">ProManage</div>
+    <div class="logo-sub">AI TASK SCHEDULING SYSTEM</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="switchPage('add')">
+      <span class="nav-icon">✦</span> Add Project
+    </div>
+    <div class="nav-item" onclick="switchPage('projects')">
+      <span class="nav-icon">◈</span> All Projects
+    </div>
+    <div class="nav-item" onclick="switchPage('schedule')">
+      <span class="nav-icon">◉</span> Greedy Schedule
+    </div>
+    <div class="nav-item" onclick="switchPage('search')">
+      <span class="nav-icon">⊙</span> Search / Delete
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    Frontend served by Java :8080<br/>
+    AI predictions via Python :8000<br/>
+    Data stored in PostgreSQL
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="page-title" id="topbarTitle">Add New Project</div>
+    <div class="api-status">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Checking Java API...</span>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════════ PAGE 1: ADD PROJECT ═══ -->
+    <div class="page active" id="page-add">
+      <div class="card">
+        <div class="card-title">Project Details <span>→ AI Prediction → Save</span></div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Project Title</label>
+            <input type="text" id="inp-title" placeholder="e.g. E-Commerce Website Revamp" />
+          </div>
+          <div class="form-group">
+            <label>Project Type</label>
+            <select id="inp-type">
+              <option value="">Select type…</option>
+              <option>Web Development</option>
+              <option>Mobile App</option>
+              <option>Data Science</option>
+              <option>CRM System</option>
+              <option>ERP System</option>
+              <option>E-Commerce</option>
+              <option>API Integration</option>
+              <option>DevOps / Cloud</option>
+              <option>UI/UX Design</option>
+              <option>Security Audit</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Deadline Day (1–5 = Mon–Fri)</label>
+            <select id="inp-deadline">
+              <option value="">Select deadline…</option>
+              <option value="1">Day 1 — Monday</option>
+              <option value="2">Day 2 — Tuesday</option>
+              <option value="3">Day 3 — Wednesday</option>
+              <option value="4">Day 4 — Thursday</option>
+              <option value="5">Day 5 — Friday</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Base Revenue (₹)</label>
+            <input type="number" id="inp-revenue" placeholder="e.g. 75000" min="1" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="addProject()" id="btn-add">
+            ✦ Get AI Prediction &amp; Save
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Result Box (shown after save) -->
+      <div class="prediction-box" id="prediction-box">
+        <h4>⚡ AI Predictions — <span id="pr-project-id" style="color:var(--gold)"></span></h4>
+        <div class="pred-grid">
+          <div><div class="pred-label">Complexity</div><div class="pred-value" id="pr-complexity">—</div></div>
+          <div><div class="pred-label">Client Priority</div><div class="pred-value" id="pr-priority">—</div></div>
+          <div><div class="pred-label">Team Experience</div><div class="pred-value" id="pr-team">—</div></div>
+          <div><div class="pred-label">Delay Rate</div><div class="pred-value red" id="pr-delay-rate">—</div></div>
+          <div><div class="pred-label">Completion Days</div><div class="pred-value accent" id="pr-completion">—</div></div>
+          <div><div class="pred-label">Delay Days</div><div class="pred-value" id="pr-delay-days">—</div></div>
+          <div><div class="pred-label">On Time?</div><div class="pred-value" id="pr-ontime">—</div></div>
+        </div>
+        <div class="revenue-compare">
+          <div class="rev-block">
+            <div class="rev-label">Base Revenue</div>
+            <div class="rev-value text-muted" id="pr-base-rev">—</div>
+          </div>
+          <div style="font-size:20px;color:var(--muted);">→</div>
+          <div class="rev-block">
+            <div class="rev-label">Final Revenue (after AI penalty)</div>
+            <div class="rev-value text-gold" id="pr-final-rev">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ PAGE 2: ALL PROJECTS ══════ -->
+    <div class="page" id="page-projects">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Total Projects</div></div>
+        <div class="stat-card"><div class="stat-value text-gold" id="stat-toprev">—</div><div class="stat-label">Highest Final Revenue</div></div>
+        <div class="stat-card"><div class="stat-value text-green" id="stat-ontime">—</div><div class="stat-label">On-Time Projects</div></div>
+        <div class="stat-card"><div class="stat-value text-red" id="stat-delayed">—</div><div class="stat-label">Delayed Projects</div></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:20px 24px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+          <div class="card-title" style="margin:0">
+            All Projects
+            <span style="color:var(--muted);font-size:13px;font-weight:400;">— sorted by max profit first</span>
+          </div>
+          <button class="btn btn-secondary" onclick="loadProjects()" style="font-size:12px;padding:7px 14px;">↻ Refresh</button>
+        </div>
+        <div class="table-wrap" style="border:none;border-radius:0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th><th>ID</th><th>Title</th><th>Type</th><th>Deadline</th>
+                <th>Complexity</th><th>Delay Rate</th><th>On Time</th>
+                <th>Base Rev (₹)</th><th>Final Rev (₹)</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="projects-tbody">
+              <tr><td colspan="11"><div class="empty-state"><p>Loading…</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═════════════════════════════ PAGE 3: GREEDY SCHEDULE ═════ -->
+    <div class="page" id="page-schedule">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <div>
+          <div style="font-family:var(--font-head);font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Deadline-Constrained Greedy Algorithm</div>
+          <div style="font-family:var(--font-head);font-size:20px;font-weight:700;">Optimal Weekly Schedule</div>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <button class="btn btn-secondary" onclick="generateSchedule()">⚙ Generate New</button>
+          <button class="btn btn-gold" id="btn-save-sched" onclick="saveSchedule()" disabled>✦ Save Schedule</button>
+          <button class="btn btn-secondary" onclick="loadLatestSchedule()">↻ Load Saved</button>
+        </div>
+      </div>
+      <div id="schedule-content">
+        <div class="empty-state">
+          <div class="icon">◉</div>
+          <h3>No schedule generated yet</h3>
+          <p>Click "Generate New" to run the greedy algorithm on all projects</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ PAGE 4: SEARCH / DELETE ══ -->
+    <div class="page" id="page-search">
+      <div class="card">
+        <div class="card-title">Search Project by ID</div>
+        <div class="search-bar-wrap">
+          <input type="text" id="search-input" placeholder="e.g. PRJ-0001"
+            style="flex:1;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()" />
+          <button class="btn btn-primary" onclick="searchProject()">Search</button>
+        </div>
+        <div class="search-result" id="search-result">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+            <div>
+              <div style="font-family:var(--font-mono);font-size:12px;color:var(--accent);" id="sr-id"></div>
+              <div style="font-family:var(--font-head);font-size:22px;font-weight:700;margin-top:4px;" id="sr-title"></div>
+            </div>
+            <button class="btn btn-danger" onclick="deleteProject()">🗑 Delete Project</button>
+          </div>
+          <div class="section-divider">Manager Input</div>
+          <div class="detail-row"><span class="detail-key">Project Type</span><span id="sr-type"></span></div>
+          <div class="detail-row"><span class="detail-key">Deadline</span><span id="sr-deadline"></span></div>
+          <div class="detail-row"><span class="detail-key">Base Revenue</span><span class="text-gold" id="sr-base"></span></div>
+          <div class="section-divider">AI Predictions (from Python FastAPI)</div>
+          <div class="detail-row"><span class="detail-key">Complexity Level</span><span id="sr-complexity"></span></div>
+          <div class="detail-row"><span class="detail-key">Client Priority</span><span id="sr-priority"></span></div>
+          <div class="detail-row"><span class="detail-key">Team Experience</span><span id="sr-team"></span></div>
+          <div class="detail-row"><span class="detail-key">Predicted Delay Rate</span><span class="text-red" id="sr-delay-rate"></span></div>
+          <div class="detail-row"><span class="detail-key">Predicted Completion</span><span id="sr-completion"></span></div>
+          <div class="detail-row"><span class="detail-key">Delay Days</span><span id="sr-delay-days"></span></div>
+          <div class="detail-row"><span class="detail-key">Completed On Time?</span><span id="sr-ontime"></span></div>
+          <div class="detail-row"><span class="detail-key">Final Revenue (AI)</span><span class="text-gold" id="sr-final"></span></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div id="toast"></div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+// All API calls go to Java Spring Boot at /api/
+// Java then calls Python internally — frontend NEVER calls Python directly
+const API = '/api';
+let currentSearchId = null;
+
+// ── NAVIGATION ──────────────────────────────────────────────────────────────
+const PAGE_TITLES = {add:'Add New Project', projects:'All Projects', schedule:'Greedy Schedule', search:'Search / Delete'};
+
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item')[['add','projects','schedule','search'].indexOf(name)].classList.add('active');
+  document.getElementById('topbarTitle').textContent = PAGE_TITLES[name];
+  if (name === 'projects') loadProjects();
+  if (name === 'schedule') loadLatestSchedule();
+}
+
+// ── API STATUS CHECK (pings Java /api/projects) ──────────────────────────────
+async function checkApi() {
+  try {
+    await fetch(`${API}/projects`, {signal: AbortSignal.timeout(3000)});
+    document.getElementById('statusText').textContent = 'Java API ✓  |  Python AI ready';
+    document.getElementById('statusDot').style.background = 'var(--green)';
+  } catch {
+    document.getElementById('statusText').textContent = 'Java API offline';
+    document.getElementById('statusDot').style.background = 'var(--red)';
+    document.getElementById('statusDot').style.animation = 'none';
+  }
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `show ${type}`;
+  setTimeout(() => t.className = '', 3200);
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+const fmt = n => '₹' + Number(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+function badge(val) {
+  if (!val) return '—';
+  const v = val.toLowerCase();
+  let c = 'badge-medium';
+  if (v==='high') c='badge-high';
+  else if (v==='low') c='badge-low';
+  else if (v==='senior') c='badge-senior';
+  else if (v==='mid'||v==='medium') c='badge-mid';
+  else if (v==='junior') c='badge-junior';
+  return `<span class="badge ${c}">${val}</span>`;
+}
+
+function yesnoBadge(val) {
+  const yes = val==='Yes'||val==='1'||val===1;
+  return `<span class="badge ${yes?'badge-yes':'badge-no'}">${yes?'Yes':'No'}</span>`;
+}
+
+function rankBadge(i) {
+  const c = i===1?'rank-1':i===2?'rank-2':i===3?'rank-3':'rank-n';
+  return `<span class="rank-badge ${c}">${i}</span>`;
+}
+
+// ── PAGE 1: ADD PROJECT ─────────────────────────────────────────────────────
+// Flow: form → POST /api/projects (Java) → Java calls Python → Java saves to DB → show result
+
+async function addProject() {
+  const title    = document.getElementById('inp-title').value.trim();
+  const type     = document.getElementById('inp-type').value;
+  const deadline = document.getElementById('inp-deadline').value;
+  const revenue  = document.getElementById('inp-revenue').value;
+
+  if (!title || !type || !deadline || !revenue) { toast('Please fill all 4 fields', 'error'); return; }
+
+  const btn = document.getElementById('btn-add');
+  btn.innerHTML = '<span class="spin"></span> Getting AI prediction…';
+  btn.disabled = true;
+  document.getElementById('prediction-box').classList.remove('show');
+
+  try {
+    const res = await fetch(`${API}/projects`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        project_title: title,
+        project_type:  type,
+        deadline_days: parseInt(deadline),
+        base_revenue:  parseFloat(revenue)
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      toast(data.error || 'Error occurred', 'error');
+      return;
+    }
+
+    // Show predictions
+    document.getElementById('pr-project-id').textContent    = data.project_id || '';
+    document.getElementById('pr-complexity').textContent    = data.complexity_level || '—';
+    document.getElementById('pr-priority').textContent      = data.client_priority || '—';
+    document.getElementById('pr-team').textContent          = data.team_experience_level || '—';
+    document.getElementById('pr-delay-rate').textContent    = data.predicted_delay_rate || '—';
+
+    const comp = document.getElementById('pr-completion');
+    comp.textContent = (data.predicted_completion_days || '—') + ' days';
+
+    const dd = data.delay_days || '—';
+    const ddEl = document.getElementById('pr-delay-days');
+    ddEl.textContent = dd;
+    ddEl.className = 'pred-value ' + (dd==='No Delay'||dd==='0 days' ? 'green' : 'red');
+
+    const ot = data.completed_on_time;
+    const otEl = document.getElementById('pr-ontime');
+    const isOt = ot==='Yes'||ot==='1'||ot===1;
+    otEl.textContent = isOt ? 'Yes ✓' : 'No ✗';
+    otEl.className = 'pred-value ' + (isOt ? 'green' : 'red');
+
+    document.getElementById('pr-base-rev').textContent  = fmt(data.base_revenue);
+    document.getElementById('pr-final-rev').textContent = fmt(data.final_revenue_realized);
+
+    document.getElementById('prediction-box').classList.add('show');
+
+    // Reset form
+    ['inp-title','inp-type','inp-deadline','inp-revenue'].forEach(id => {
+      const el = document.getElementById(id);
+      el.tagName==='SELECT' ? (el.value='') : (el.value='');
+    });
+
+    toast(`Project ${data.project_id} saved successfully!`, 'success');
+
+  } catch(e) {
+    toast('Cannot reach Java server. Is it running on :8080?', 'error');
+  } finally {
+    btn.innerHTML = '✦ Get AI Prediction &amp; Save';
+    btn.disabled = false;
+  }
+}
+
+// ── PAGE 2: ALL PROJECTS ────────────────────────────────────────────────────
+async function loadProjects() {
+  const tbody = document.getElementById('projects-tbody');
+  tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="spin" style="width:28px;height:28px;margin:0 auto 12px;border-width:3px;"></div></div></td></tr>`;
+  try {
+    const res = await fetch(`${API}/projects`);
+    const {projects} = await res.json();
+    if (!projects.length) {
+      tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="icon">◌</div><h3>No projects yet</h3><p>Add your first project</p></div></td></tr>`;
+      ['stat-total','stat-toprev','stat-ontime','stat-delayed'].forEach(id => document.getElementById(id).textContent = '0');
+      return;
+    }
+    updateStats(projects);
+    tbody.innerHTML = projects.map((p,i) => `
+      <tr>
+        <td>${rankBadge(i+1)}</td>
+        <td class="mono" style="color:var(--accent)">${p.project_id}</td>
+        <td style="max-width:170px;font-weight:500;">${p.project_title||p.title||'—'}</td>
+        <td style="color:var(--muted);font-size:13px;">${p.project_type||'—'}</td>
+        <td class="mono">Day ${p.deadline_days||p.deadline}</td>
+        <td>${badge(p.complexity_level)}</td>
+        <td class="text-red mono">${p.predicted_delay_rate||'—'}</td>
+        <td>${yesnoBadge(p.completed_on_time)}</td>
+        <td class="mono">${fmt(p.base_revenue)}</td>
+        <td class="mono text-gold">${fmt(p.final_revenue_realized)}</td>
+        <td><button class="btn btn-danger" onclick="quickDelete('${p.project_id}')">✕</button></td>
+      </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><h3>Failed to load</h3><p>${e.message}</p></div></td></tr>`;
+  }
+}
+
+function updateStats(projects) {
+  const on  = projects.filter(p => p.completed_on_time==='Yes'||p.completed_on_time==='1').length;
+  const del = projects.filter(p => p.completed_on_time==='No' ||p.completed_on_time==='0').length;
+  const top = projects.length ? Math.max(...projects.map(p=>parseFloat(p.final_revenue_realized))) : 0;
+  document.getElementById('stat-total').textContent   = projects.length;
+  document.getElementById('stat-toprev').textContent  = projects.length ? fmt(top) : '—';
+  document.getElementById('stat-ontime').textContent  = on;
+  document.getElementById('stat-delayed').textContent = del;
+}
+
+async function quickDelete(id) {
+  if (!confirm(`Delete project ${id}?`)) return;
+  const res = await fetch(`${API}/projects/${id}`, {method:'DELETE'});
+  if (res.ok) { toast(`${id} deleted`, 'info'); loadProjects(); }
+  else toast('Delete failed', 'error');
+}
+
+// ── PAGE 3: GREEDY SCHEDULE ─────────────────────────────────────────────────
+async function generateSchedule() {
+  document.getElementById('schedule-content').innerHTML =
+    `<div class="empty-state"><div class="spin" style="width:32px;height:32px;margin:0 auto 12px;border-width:3px;"></div><p>Running greedy algorithm…</p></div>`;
+  document.getElementById('btn-save-sched').disabled = true;
+  try {
+    const res = await fetch(`${API}/schedule/generate`);
+    const data = await res.json();
+    if (!res.ok) { toast(data.error, 'error'); return; }
+    renderSchedule(data);
+    document.getElementById('btn-save-sched').disabled = false;
+    toast('Schedule generated!', 'success');
+  } catch(e) {
+    document.getElementById('schedule-content').innerHTML =
+      `<div class="empty-state"><div class="icon">⚠</div><h3>Failed</h3><p>${e.message}</p></div>`;
+  }
+}
+
+async function loadLatestSchedule() {
+  try {
+    const res = await fetch(`${API}/schedule/latest`);
+    if (res.status===404) return;
+    if (res.ok) renderSchedule(await res.json(), true);
+  } catch {}
+}
+
+async function saveSchedule() {
+  const btn = document.getElementById('btn-save-sched');
+  btn.innerHTML = '<span class="spin"></span>'; btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/schedule/save`, {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+    const data = await res.json();
+    if (res.ok) toast(`Schedule #${data.schedule_id} saved!`, 'success');
+    else toast(data.error, 'error');
+  } catch(e) { toast(e.message, 'error'); }
+  finally { btn.innerHTML = '✦ Save Schedule'; btn.disabled = false; }
+}
+
+function renderSchedule(data, saved=false) {
+  const slots = {};
+  (data.schedule||[]).forEach(e => slots[e.day] = e);
+  const dNames = ['','Monday','Tuesday','Wednesday','Thursday','Friday'];
+  let html = '<div class="week-grid">';
+  for (let d=1; d<=5; d++) {
+    const e = slots[d];
+    if (e) {
+      const p = e.project;
+      const rev = p.final_revenue_realized;
+      html += `<div class="day-card filled">
+        <div class="day-ontime">${yesnoBadge(p.completed_on_time)}</div>
+        <div class="day-label">DAY ${d}</div>
+        <div class="day-name">${dNames[d]}</div>
+        <div class="day-proj-id">${p.project_id}</div>
+        <div class="day-proj-title">${p.project_title||p.title}</div>
+        <div class="day-proj-type">${p.project_type||''}</div>
+        <div class="day-revenue">${fmt(rev)}</div>
+        <div class="day-rev-label">Final Revenue</div>
+      </div>`;
+    } else {
+      html += `<div class="day-card">
+        <div class="day-label">DAY ${d}</div>
+        <div class="day-name">${dNames[d]}</div>
+        <div class="day-empty">No project assigned</div>
+      </div>`;
+    }
+  }
+  html += '</div>';
+  html += `<div class="total-card">
+    <div>
+      <div class="total-label">${saved?'(Saved) ':''}Total Expected Revenue</div>
+      <div class="total-value">${fmt(data.total_revenue)}</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="total-label">Projects Scheduled</div>
+      <div style="font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--text);margin-top:4px;">${(data.schedule||[]).length} / 5</div>
+    </div>
+  </div>`;
+  if ((data.unscheduled||[]).length) {
+    html += `<div class="unscheduled-title">⊙ Unscheduled (${data.unscheduled.length}) — lower AI revenue or no free slot</div>
+    <div class="table-wrap"><table><thead><tr>
+      <th>ID</th><th>Title</th><th>Type</th><th>Deadline</th><th>Final Rev (₹)</th></tr></thead><tbody>`;
+    data.unscheduled.forEach(p => {
+      html += `<tr>
+        <td class="mono" style="color:var(--muted)">${p.project_id}</td>
+        <td>${p.project_title||p.title}</td>
+        <td style="color:var(--muted);font-size:13px">${p.project_type||'—'}</td>
+        <td class="mono">Day ${p.deadline_days||p.deadline}</td>
+        <td class="mono text-muted">${fmt(p.final_revenue_realized)}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+  document.getElementById('schedule-content').innerHTML = html;
+}
+
+// ── PAGE 4: SEARCH / DELETE ─────────────────────────────────────────────────
+async function searchProject() {
+  const id = document.getElementById('search-input').value.trim().toUpperCase();
+  if (!id) { toast('Enter a project ID', 'error'); return; }
+  try {
+    const res = await fetch(`${API}/projects/${id}`);
+    if (res.status===404) { toast(`${id} not found`, 'error'); document.getElementById('search-result').classList.remove('show'); return; }
+    const p = await res.json();
+    currentSearchId = p.project_id;
+    document.getElementById('sr-id').textContent        = p.project_id;
+    document.getElementById('sr-title').textContent     = p.project_title||p.title;
+    document.getElementById('sr-type').textContent      = p.project_type||'—';
+    document.getElementById('sr-deadline').textContent  = `Day ${p.deadline_days||p.deadline}`;
+    document.getElementById('sr-base').textContent      = fmt(p.base_revenue);
+    document.getElementById('sr-complexity').innerHTML  = badge(p.complexity_level);
+    document.getElementById('sr-priority').innerHTML    = badge(p.client_priority);
+    document.getElementById('sr-team').innerHTML        = badge(p.team_experience_level);
+    document.getElementById('sr-delay-rate').textContent = p.predicted_delay_rate||'—';
+    document.getElementById('sr-completion').textContent = (p.predicted_completion_days||'—')+' days';
+    document.getElementById('sr-delay-days').textContent = p.delay_days||'—';
+    document.getElementById('sr-ontime').innerHTML      = yesnoBadge(p.completed_on_time);
+    document.getElementById('sr-final').textContent     = fmt(p.final_revenue_realized);
+    document.getElementById('search-result').classList.add('show');
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+async function deleteProject() {
+  if (!currentSearchId || !confirm(`Delete ${currentSearchId}? This cannot be undone.`)) return;
+  const res = await fetch(`${API}/projects/${currentSearchId}`, {method:'DELETE'});
+  if (res.ok) {
+    toast(`${currentSearchId} deleted`, 'info');
+    document.getElementById('search-result').classList.remove('show');
+    document.getElementById('search-input').value = '';
+    currentSearchId = null;
+  } else toast('Delete failed', 'error');
+}
+
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key==='Enter') searchProject();
+});
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+checkApi();
+setInterval(checkApi, 15000);
+</script>
+</body>
+</html>
