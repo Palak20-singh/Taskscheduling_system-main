@@ -1,22 +1,45 @@
 # ProManage Solutions Pvt. Ltd.
-## Automated Task Scheduling System
+## Intelligent Task Scheduling System
 
-A **Java + PostgreSQL** console application that automatically generates
-an optimal weekly project schedule to maximise revenue while respecting
-project deadlines.
+A full-stack **Java + PostgreSQL + Python AI** application that automatically generates an optimal weekly project schedule to maximise revenue while respecting project deadlines — enriched with machine learning predictions for smarter planning.
 
 ---
 
 ## Table of Contents
-1. [Business Rules](#business-rules)
-2. [Project Structure](#project-structure)
-3. [Algorithm Explained](#algorithm-explained)
-4. [Prerequisites](#prerequisites)
-5. [Database Setup](#database-setup)
-6. [Configuration](#configuration)
-7. [Build & Run](#build--run)
-8. [Menu Walkthrough](#menu-walkthrough)
-9. [Sample Run](#sample-run)
+1. [System Architecture](#system-architecture)
+2. [Business Rules](#business-rules)
+3. [Project Structure](#project-structure)
+4. [Algorithm Explained](#algorithm-explained)
+5. [AI Prediction Service](#ai-prediction-service)
+6. [Prerequisites](#prerequisites)
+7. [Database Setup](#database-setup)
+8. [Configuration](#configuration)
+9. [Build & Run](#build--run)
+10. [Menu Walkthrough](#menu-walkthrough)
+11. [Sample Run](#sample-run)
+12. [Key Design Decisions](#key-design-decisions)
+
+---
+
+## System Architecture
+
+```
+Browser / Console Frontend
+          │
+          ▼
+Java Spring Boot (CRUD, DB, Scheduling, Menu)
+          │  server-to-server HTTP POST /predict
+          ▼
+Python FastAPI — ML Microservice  (this repo)
+          │
+          ▼
+   7 Pre-trained ML Models (.pkl)
+```
+
+The system is split into two focused services:
+
+- **Java backend** — handles the console UI, database operations, CRUD, and the greedy scheduling algorithm.
+- **Python ML microservice** — receives 4 project fields and returns 11 AI-enriched fields (complexity, delay rate, predicted completion days, final revenue, etc.). It does **not** touch the database.
 
 ---
 
@@ -39,37 +62,48 @@ project deadlines.
 ## Project Structure
 
 ```
-TaskSchedulingSystem/
+ProManage/
 │
-├── pom.xml                                      ← Maven build file
+├── README.md
 │
-└── src/
-    └── main/
-        ├── java/com/promanage/
-        │   ├── Main.java                        ← Entry point
-        │   │
-        │   ├── model/
-        │   │   ├── Project.java                 ← Domain object
-        │   │   └── ScheduleEntry.java           ← Day ↔ Project mapping
-        │   │
-        │   ├── dao/
-        │   │   ├── ProjectDAO.java              ← DB operations for projects
-        │   │   └── ScheduleDAO.java             ← DB operations for schedules
-        │   │
-        │   ├── service/
-        │   │   ├── ProjectService.java          ← Business logic (projects)
-        │   │   └── SchedulerService.java        ← Scheduling algorithm
-        │   │
-        │   ├── ui/
-        │   │   └── MainMenu.java                ← Console menu / UI
-        │   │
-        │   └── util/
-        │       ├── DatabaseConnection.java      ← JDBC connection helper
-        │       ├── DisplayUtil.java             ← Pretty-print helpers
-        │       └── InputValidator.java          ← Safe console input
-        │
-        └── resources/
-            └── schema.sql                       ← DB schema (run once)
+├── task-scheduling-system/              ← Java backend
+│   ├── pom.xml
+│   └── src/
+│       └── main/
+│           ├── java/com/promanage/
+│           │   ├── Main.java
+│           │   ├── model/
+│           │   │   ├── Project.java
+│           │   │   └── ScheduleEntry.java
+│           │   ├── dao/
+│           │   │   ├── ProjectDAO.java
+│           │   │   └── ScheduleDAO.java
+│           │   ├── service/
+│           │   │   ├── ProjectService.java
+│           │   │   └── SchedulerService.java
+│           │   ├── ui/
+│           │   │   └── MainMenu.java
+│           │   └── util/
+│           │       ├── DatabaseConnection.java
+│           │       ├── DisplayUtil.java
+│           │       └── InputValidator.java
+│           └── resources/
+│               └── schema.sql
+│
+└── project_scheduler_ai/               ← Python ML microservice
+    ├── app/
+    │   ├── main.py                     ← FastAPI app & /predict endpoint
+    │   ├── predictor.py                ← Core ML prediction pipeline
+    │   ├── model_loader.py             ← Loads all 7 models at startup
+    │   └── schemas.py                  ← Pydantic input/output schemas
+    └── models/                         ← Pre-trained .pkl files (not tracked in git)
+        ├── model_complexity.pkl
+        ├── model_client_priority.pkl
+        ├── model_team_experience.pkl
+        ├── model_delay_rate.pkl
+        ├── model_completion_days.pkl
+        ├── delay_encoder.pkl
+        └── target_label_encoders.pkl
 ```
 
 ---
@@ -87,9 +121,7 @@ The scheduler uses the classic **Deadline-Constrained Job Scheduling** greedy al
 ```
 
 **Why "latest available slot"?**
-Placing a project as late as possible within its deadline keeps earlier
-slots free for projects with tighter deadlines, maximising the number of
-high-value projects we can include.
+Placing a project as late as possible within its deadline keeps earlier slots free for projects with tighter deadlines, maximising the number of high-value projects we can include.
 
 **Example**
 
@@ -104,13 +136,55 @@ high-value projects we can include.
 Sorted order: P1, P2, P3, P4, P5
 
 - P1 (deadline 2) → Day 2 (latest free slot ≤ 2)
-- P2 (deadline 1) → Day 1 (latest free slot ≤ 1)
+- P2 (deadline 1) → Day 1
 - P3 (deadline 3) → Day 3
 - P4 (deadline 3) → no free slot ≤ 3 **❌ skipped**
 - P5 (deadline 4) → Day 4
 
 **Schedule: Day1=P2, Day2=P1, Day3=P3, Day4=P5**
 **Total: ₹2,40,000**
+
+**Time Complexity:** O(n log n) for sorting + O(n × 5) for placement → effectively **O(n log n)** overall.
+
+---
+
+## AI Prediction Service
+
+The Python microservice runs 7 trained ML models to enrich each project with scheduling intelligence before the greedy algorithm runs.
+
+### `POST /predict`
+
+**Request** — 4 fields sent by the Java backend:
+```json
+{
+  "project_title": "Website Redesign",
+  "project_type": "Web Development",
+  "deadline_days": 30,
+  "base_revenue": 15000.00
+}
+```
+
+**Response** — 11 enriched fields returned:
+```json
+{
+  "project_title": "Website Redesign",
+  "project_type": "Web Development",
+  "deadline_days": 30,
+  "base_revenue": 15000.00,
+  "complexity_level": "Medium",
+  "client_priority": "High",
+  "team_experience_level": "Senior",
+  "predicted_delay_rate": "12%",
+  "predicted_completion_days": 33.5,
+  "delay_days": "3 days",
+  "completed_on_time": "No",
+  "final_revenue_realized": 12750.00
+}
+```
+
+**Revenue Penalty Formula:** `5% of base_revenue × number of delay days`
+
+The Java `PythonApiClient` calls this endpoint server-to-server (not from the browser) at `http://localhost:8000/predict`.
 
 ---
 
@@ -121,6 +195,7 @@ Sorted order: P1, P2, P3, P4, P5
 | Java JDK | 17 or higher |
 | Apache Maven | 3.8 or higher |
 | PostgreSQL | 13 or higher |
+| Python | 3.10 or higher |
 
 ---
 
@@ -135,7 +210,7 @@ Sorted order: P1, P2, P3, P4, P5
 
 3. **Connect and run the schema:**
    ```bash
-   psql -U postgres -d promanage_db -f src/main/resources/schema.sql
+   psql -U postgres -d promanage_db -f task-scheduling-system/src/main/resources/schema.sql
    ```
 
    This creates:
@@ -149,38 +224,52 @@ Sorted order: P1, P2, P3, P4, P5
 
 ## Configuration
 
-Open `src/main/java/com/promanage/util/DatabaseConnection.java` and update:
+### Java — Database Connection
+
+Open `task-scheduling-system/src/main/java/com/promanage/util/DatabaseConnection.java` and update:
 
 ```java
-private static final String HOST     = "localhost";   // DB host
-private static final String PORT     = "5432";        // DB port
-private static final String DATABASE = "promanage_db";// DB name
-private static final String USER     = "postgres";    // DB username
-private static final String PASSWORD = "yourpassword";// ← CHANGE THIS
+private static final String HOST     = "localhost";    // DB host
+private static final String PORT     = "5432";         // DB port
+private static final String DATABASE = "promanage_db"; // DB name
+private static final String USER     = "postgres";     // DB username
+private static final String PASSWORD = "yourpassword"; // ← CHANGE THIS
 ```
+
+### Python — Model Files
+
+Place all pre-trained `.pkl` model files inside `project_scheduler_ai/models/` before starting the service. This folder is excluded from version control (see `.gitignore`).
 
 ---
 
 ## Build & Run
 
-### Option A – Maven (recommended)
+### 1. Start the Python ML Service
 
 ```bash
-# From the project root (where pom.xml lives)
-mvn clean package
+cd project_scheduler_ai/app
+pip install fastapi uvicorn scikit-learn pandas joblib pydantic
+uvicorn main:app --reload
+```
 
-# Run the fat-jar
+The ML service will be available at `http://localhost:8000`.
+Interactive API docs: `http://localhost:8000/docs`
+
+### 2. Start the Java Application
+
+**Option A – Maven (recommended)**
+```bash
+cd task-scheduling-system
+mvn clean package
 java -jar target/task-scheduling-system-jar-with-dependencies.jar
 ```
 
-### Option B – Maven exec plugin
-
+**Option B – Maven exec plugin**
 ```bash
 mvn compile exec:java
 ```
 
-### Option C – Manual compile
-
+**Option C – Manual compile**
 ```bash
 # Download postgresql-42.7.3.jar into a lib/ folder first
 javac -cp "lib/postgresql-42.7.3.jar" \
@@ -190,13 +279,15 @@ javac -cp "lib/postgresql-42.7.3.jar" \
 java -cp "out:lib/postgresql-42.7.3.jar" com.promanage.Main
 ```
 
+> **Note:** Start the Python service before the Java application so AI enrichment is available on startup.
+
 ---
 
 ## Menu Walkthrough
 
 ```
 ┌─────────────────────────────────────────┐
-│           MAIN MENU                     │
+│               MAIN MENU                 │
 ├─────────────────────────────────────────┤
 │  1. Add New Project                     │
 │  2. View All Projects                   │
@@ -211,9 +302,9 @@ java -cp "out:lib/postgresql-42.7.3.jar" com.promanage.Main
 
 | Option | Action |
 |--------|--------|
-| 1 | Add a project (title, deadline 1-5, revenue) |
-| 2 | List all projects as a formatted table |
-| 3 | Run algorithm, display optimal schedule, optionally save it |
+| 1 | Add a project (title, deadline 1–5, revenue); AI predictions are fetched and stored automatically |
+| 2 | List all projects as a formatted table, including AI-enriched fields |
+| 3 | Run the greedy algorithm, display the optimal schedule, optionally save it |
 | 4 | Display the most recently saved schedule |
 | 5 | Show the last 10 saved schedules (summary) |
 | 6 | Look up a project by its ID (e.g. PRJ-0003) |
@@ -227,7 +318,7 @@ java -cp "out:lib/postgresql-42.7.3.jar" com.promanage.Main
 ```
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                    ProManage Solutions Pvt. Ltd.                             ║
-║                  Automated Task Scheduling System                            ║
+║               Intelligent Automated Task Scheduling System                   ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 Testing database connection …
@@ -263,14 +354,31 @@ Testing database connection …
 
 ## Key Design Decisions
 
-- **Auto-generated IDs**: Uses a PostgreSQL sequence, formatted as `PRJ-XXXX`
-  (zero-padded 4 digits).  IDs are never reused even if projects are deleted.
-- **Transactional saves**: Schedule header + all entries are saved in a single
-  DB transaction — either all succeed or none do.
-- **Layered architecture**: `UI → Service → DAO → DB` keeps concerns
-  separated and the code easy to test or extend.
-- **Algorithm time complexity**: O(n log n) for sorting + O(n × 5) = O(n) for
-  placement → effectively O(n log n) overall, plenty fast for weekly batches.
+- **Separation of concerns** — The Python service handles only ML inference; the Java service owns all data, business logic, and UI. Each can be developed, scaled, or replaced independently.
+- **Auto-generated IDs** — Uses a PostgreSQL sequence, formatted as `PRJ-XXXX` (zero-padded 4 digits). IDs are never reused even if projects are deleted.
+- **Transactional saves** — Schedule header + all entries are saved in a single DB transaction — either all succeed or none do.
+- **Layered architecture** — `UI → Service → DAO → DB` keeps concerns separated and the code easy to test or extend.
+- **Models loaded once** — All 7 ML models are loaded into memory at Python service startup, keeping per-request inference fast.
+- **Algorithm efficiency** — O(n log n) overall, plenty fast for weekly project batches.
+
+---
+
+## .gitignore Recommendations
+
+```
+# Python
+models/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Java
+target/
+*.class
+
+# Environment
+*.env
+```
 
 ---
 
