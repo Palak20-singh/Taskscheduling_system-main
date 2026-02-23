@@ -1,0 +1,101 @@
+﻿project_id,project_title,project_type,deadline_days,base_revenue,complexity_level,client_priority,team_experience_level,historical_delay_rate,actual_completion_days,completed_on_time,delay_days,final_revenue_realized
+1,E-Commerce Platform,Web Development,3,80000,Medium,High,Senior Team,15%,2,Yes,0,80000
+2,Payment API Integration,Backend Development,2,60000,High,Very High,Mid-Level Team,30%,3,No,1,54000
+3,Mobile UI Enhancement,Mobile Development,1,50000,Low,Medium,Senior Team,10%,1,Yes,0,50000
+4,CRM System Upgrade,Web Development,4,100000,Very High,Very High,Junior Team,40%,5,No,1,90000
+5,SEO Optimization,Marketing,2,30000,Very Low,Low,Senior Team,5%,2,Yes,0,30000
+6,Testing Automation Setup,Quality Assurance,3,40000,Low,Medium,Senior Team,12%,3,Yes,0,40000
+7,Payment Gateway Module,Backend Development,2,120000,Very High,Very High,Mid-Level Team,35%,3,No,1,108000
+8,AI Chatbot Development,AI Development,5,150000,High,Very High,Junior Team,45%,6,No,1,120000
+9,Bug Fixing Task,Maintenance,1,20000,Very Low,Low,Senior Team,2%,1,Yes,0,20000
+10,Analytics Dashboard,Data Engineering,3,90000,Medium,High,Senior Team,18%,3,Yes,0,90000
+11,Inventory System,Web Development,2,70000,Medium,High,Mid-Level Team,20%,3,No,1,63000
+12,Recommendation Engine,AI Development,4,140000,Very High,High,Senior Team,38%,4,Yes,0,140000
+13,Email Marketing Setup,Marketing,1,25000,Low,Medium,Junior Team,8%,1,Yes,0,25000
+14,Cloud Migration,Backend Development,5,160000,Very High,Very High,Senior Team,42%,6,No,1,144000
+15,Mobile App Backend,Backend Development,3,85000,High,High,Mid-Level Team,28%,3,Yes,0,85000
+16,UI Redesign,Web Development,2,60000,Medium,Medium,Senior Team,14%,2,Yes,0,60000
+17,Data Pipeline Setup,Data Engineering,4,110000,High,High,Mid-Level Team,32%,5,No,1,99000
+18,Chat Support Integration,AI Development,3,95000,High,Very High,Junior Team,37%,4,No,1,85500
+19,Performance Optimization,Maintenance,2,45000,Low,Medium,Senior Team,9%,2,Yes,0,45000
+20,Reporting Tool,Data Engineering,3,75000,Medium,High,Senior Team,16%,3,Yes,0,75000
+21,Customer Portal Upgrade,Web Development,3,82000,Medium,High,Senior Team,17%,3,Yes,0,82000
+22,Microservices Refactor,Backend Development,4,130000,Very High,Very High,Mid-Level Team,34%,5,No,1,117000
+23,Social Media Campaign,Marketing,2,35000,Low,Medium,Senior Team,7%,2,Yes,0,35000
+24,Database Optimization,Data Engineering,3,92000,High,High,Senior Team,26%,3,Yes,0,92000
+25,Mobile Payment Fix,Mobile Development,2,68000,Medium,High,Mid-Level Team,19%,3,No,1,61200
+26,AI Fraud Detection,AI Development,5,180000,Very High,Very High,Senior Team,44%,6,No,1,162000
+27,Landing Page Design,Web Development,1,30000,Low,Medium,Junior Team,11%,1,Yes,0,30000
+28,Server Monitoring Setup,Backend Development,3,75000,Medium,High,Senior Team,21%,3,Yes,0,75000
+29,Data Visualization Tool,Data Engineering,4,105000,High,High,Mid-Level Team,29%,5,No,1,94500
+30,Security Patch Update,Maintenance,1,25000,Very Low,High,Senior Team,6%,1,Yes,0,25000
+31,Chatbot Enhancement,AI Development,3,98000,High,Very High,Mid-Level Team,33%,4,No,1,88200
+32,Order Tracking System,Web Development,2,72000,Medium,High,Senior Team,15%,2,Yes,0,72000
+33,Cloud Backup Setup,Backend Development,3,88000,High,High,Senior Team,24%,3,Yes,0,88000
+34,UX Research Study,Marketing,2,42000,Low,Medium,Senior Team,9%,2,Yes,0,42000
+35,Mobile Performance Tuning,Mobile Development,2,61000,Medium,High,Mid-Level Team,18%,3,No,1,54900
+36,Data Warehouse Upgrade,Data Engineering,5,170000,Very High,Very High,Senior Team,41%,6,No,1,153000
+37,API Rate Limiting Module,Backend Development,3,83000,High,High,Mid-Level Team,27%,3,Yes,0,83000
+38,UI Accessibility Fix,Web Development,1,28000,Low,Medium,Senior Team,10%,1,Yes,0,28000
+39,AI Model Optimization,AI Development,4,145000,Very High,Very High,Senior Team,39%,4,Yes,0,145000
+40,Email Automation Workflow,Marketing,2,39000,Low,Medium,Junior Team,8%,2,Yes,0,39000
+41,Customer Feedback Dashboard,Data Engineering,3,87000,Medium,High,Senior Team,20%,3,Yes,0,87000
+42,Inventory Forecast Module,AI Development,4,155000,High,Very High,Mid-Level Team,36%,5,No,1,139500
+43,Web Performance Audit,Web Development,2,54000,Medium,Medium,Senior Team,14%,2,Yes,0,54000
+44,Payment Security Upgrade,Backend Development,3,95000,High,Very High,Senior Team,30%,4,No,1,85500
+45,App Crash Fix,Mobile Development,1,32000,Low,High,Senior Team,9%,1,Yes,0,32000
+46,ETL Automation,Data Engineering,4,115000,High,High,Mid-Level Team,28%,5,No,1,103500
+47,SEO Content Expansion,Marketing,2,36000,Low,Medium,Senior Team,7%,2,Yes,0,36000
+48,User Authentication Module,Backend Development,3,91000,High,High,Senior Team,23%,3,Yes,0,91000
+49,Chat UI Redesign,Web Development,2,62000,Medium,High,Mid-Level Team,16%,2,Yes,0,62000
+50,AI Sentiment Analysis,AI Development,5,175000,Very High,Very High,Senior Team,43%,6,No,1,157500
+51,Maintenance Hotfix,Maintenance,1,22000,Very Low,Medium,Senior Team,4%,1,Yes,0,22000
+52,Data Cleanup Task,Data Engineering,2,58000,Low,Medium,Senior Team,12%,2,Yes,0,58000
+53,Mobile Push Notifications,Mobile Development,3,76000,Medium,High,Mid-Level Team,19%,3,Yes,0,76000
+54,AI Recommendation Update,AI Development,4,148000,High,Very High,Senior Team,35%,4,Yes,0,148000
+55,Frontend Component Library,Web Development,3,82000,Medium,High,Senior Team,17%,4,No,1,73800
+56,Database Sharding,Backend Development,4,132000,Very High,Very High,Senior Team,37%,5,No,1,118800
+57,Email Template Design,Marketing,1,26000,Low,Low,Junior Team,6%,1,Yes,0,26000
+58,AI Data Labeling Tool,AI Development,3,99000,High,High,Mid-Level Team,31%,3,Yes,0,99000
+59,Real-time Analytics Engine,Data Engineering,5,165000,Very High,Very High,Senior Team,40%,6,No,1,148500
+60,Server Migration,Backend Development,3,88000,High,High,Senior Team,25%,3,Yes,0,88000
+61,Web Security Audit,Web Development,2,61000,Medium,High,Senior Team,15%,2,Yes,0,61000
+62,Payment Reconciliation Tool,Backend Development,4,120000,High,Very High,Mid-Level Team,33%,5,No,1,108000
+63,Mobile Dark Mode Feature,Mobile Development,2,64000,Medium,Medium,Senior Team,14%,2,Yes,0,64000
+64,Customer Data Sync,Data Engineering,3,87000,Medium,High,Senior Team,21%,3,Yes,0,87000
+65,AI Voice Assistant,AI Development,5,190000,Very High,Very High,Senior Team,46%,6,No,1,171000
+66,UI Bug Resolution,Web Development,1,29000,Low,Medium,Senior Team,9%,1,Yes,0,29000
+67,Order API Enhancement,Backend Development,3,84000,High,High,Mid-Level Team,26%,3,Yes,0,84000
+68,SEO Technical Audit,Marketing,2,37000,Low,Medium,Senior Team,8%,2,Yes,0,37000
+69,Mobile App Analytics,Mobile Development,3,78000,Medium,High,Senior Team,18%,3,Yes,0,78000
+70,AI Personalization Engine,AI Development,4,160000,High,Very High,Senior Team,34%,4,Yes,0,160000
+71,System Health Dashboard,Data Engineering,3,89000,Medium,High,Senior Team,22%,4,No,1,80100
+72,Cloud Infrastructure Audit,Backend Development,4,140000,Very High,Very High,Senior Team,39%,5,No,1,126000
+73,Marketing Automation Bot,Marketing,2,41000,Low,Medium,Senior Team,10%,2,Yes,0,41000
+74,Web Accessibility Upgrade,Web Development,2,60000,Medium,High,Senior Team,16%,2,Yes,0,60000
+75,AI Image Processing Module,AI Development,4,152000,High,Very High,Mid-Level Team,36%,5,No,1,136800
+76,Mobile App Security Fix,Mobile Development,2,67000,Medium,High,Senior Team,17%,2,Yes,0,67000
+77,Data API Gateway,Backend Development,3,91000,High,High,Senior Team,27%,3,Yes,0,91000
+78,Customer Segmentation Model,AI Development,5,185000,Very High,Very High,Senior Team,44%,6,No,1,166500
+79,Content Management Update,Web Development,2,58000,Medium,Medium,Senior Team,14%,2,Yes,0,58000
+80,Database Performance Tuning,Data Engineering,3,93000,High,High,Senior Team,28%,3,Yes,0,93000
+81,App UI Animation,Mobile Development,1,31000,Low,Medium,Senior Team,7%,1,Yes,0,31000
+82,Cloud Cost Optimization,Backend Development,4,125000,High,Very High,Senior Team,32%,5,No,1,112500
+83,AI Chat Integration,AI Development,3,105000,High,High,Mid-Level Team,30%,3,Yes,0,105000
+84,Web Load Testing,Web Development,2,62000,Medium,High,Senior Team,18%,2,Yes,0,62000
+85,Marketing Analytics Report,Marketing,2,39000,Low,Medium,Senior Team,9%,2,Yes,0,39000
+86,Data Backup Automation,Data Engineering,3,88000,Medium,High,Senior Team,23%,3,Yes,0,88000
+87,Mobile Payment UI,Mobile Development,2,65000,Medium,High,Mid-Level Team,19%,3,No,1,58500
+88,AI Forecasting Tool,AI Development,4,158000,High,Very High,Senior Team,37%,4,Yes,0,158000
+89,Server Log Analyzer,Backend Development,3,83000,High,High,Senior Team,25%,3,Yes,0,83000
+90,Web Form Optimization,Web Development,1,27000,Low,Medium,Senior Team,8%,1,Yes,0,27000
+91,Real-time Reporting API,Backend Development,4,118000,High,Very High,Senior Team,34%,5,No,1,106200
+92,Mobile Performance Metrics,Mobile Development,3,76000,Medium,High,Senior Team,20%,3,Yes,0,76000
+93,AI Data Validation,AI Development,4,149000,High,Very High,Mid-Level Team,33%,4,Yes,0,149000
+94,Marketing Campaign Tracker,Marketing,2,38000,Low,Medium,Senior Team,9%,2,Yes,0,38000
+95,Web CMS Upgrade,Web Development,3,82000,Medium,High,Senior Team,17%,3,Yes,0,82000
+96,Database Index Optimization,Data Engineering,3,91000,High,High,Senior Team,27%,4,No,1,81900
+97,Mobile App Login Feature,Mobile Development,2,64000,Medium,High,Senior Team,16%,2,Yes,0,64000
+98,AI Risk Assessment Engine,AI Development,5,195000,Very High,Very High,Senior Team,45%,6,No,1,175500
+99,Cloud Deployment Script,Backend Development,2,70000,Medium,High,Senior Team,18%,2,Yes,0,70000
+100,Customer Insights Dashboard,Data Engineering,4,125000,High,Very High,Senior Team,31%,5,No,1,112500
